@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Лопни шарики</string>
+    <string name="app_name">Опасные шарики</string>
     <string name="score_text">Очки: %d</string>
     <string name="best_score">Рекорд: %d</string>
     <string name="start_game">Начать игру</string>

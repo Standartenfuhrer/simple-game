@@ -10,13 +10,22 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class GameView extends View {
-    private ArrayList<Balloon> balloons;
+    private ArrayList<GameObject> objects;
     private Paint paint;
     private Random random;
     private int score = 0;
     private int screenWidth, screenHeight;
+    private boolean gameOver = false;
+    private GameOverListener gameOverListener;
 
-    // Конструкторы
+    public interface GameOverListener {
+        void onGameOver();
+    }
+
+    public void setGameOverListener(GameOverListener listener) {
+        this.gameOverListener = listener;
+    }
+
     public GameView(Context context) {
         super(context);
         init();
@@ -33,7 +42,7 @@ public class GameView extends View {
     }
 
     private void init() {
-        balloons = new ArrayList<>();
+        objects = new ArrayList<>();
         paint = new Paint();
         random = new Random();
         resetGame();
@@ -41,10 +50,13 @@ public class GameView extends View {
 
     public void resetGame() {
         score = 0;
-        balloons.clear();
-        // Создаем первые шарики
+        gameOver = false;
+        objects.clear();
         for (int i = 0; i < 5; i++) {
             addBalloon();
+        }
+        for (int i = 0; i < 2; i++) {
+            addBomb();
         }
     }
 
@@ -58,101 +70,162 @@ public class GameView extends View {
     private void addBalloon() {
         if (screenWidth == 0 || screenHeight == 0) return;
 
-        int radius = random.nextInt(50) + 30;
+        int radius = random.nextInt(40) + 30;
         int x = random.nextInt(screenWidth - 2 * radius) + radius;
-        int speed = random.nextInt(5) + 2;
+        int speed = random.nextInt(4) + 2;
         int color = Color.rgb(
-                random.nextInt(256),
-                random.nextInt(256),
-                random.nextInt(256)
+                random.nextInt(200) + 55,
+                random.nextInt(200) + 55,
+                random.nextInt(200) + 55
         );
 
-        balloons.add(new Balloon(x, screenHeight + radius, radius, speed, color));
+        objects.add(new Balloon(x, screenHeight + radius, radius, speed, color));
+    }
+
+    private void addBomb() {
+        if (screenWidth == 0 || screenHeight == 0) return;
+
+        int radius = random.nextInt(30) + 25;
+        int x = random.nextInt(screenWidth - 2 * radius) + radius;
+        int speed = random.nextInt(3) + 1;
+
+        objects.add(new Bomb(x, screenHeight + radius, radius, speed));
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        // Фон
         canvas.drawColor(Color.WHITE);
 
-        // Рисуем шарики
-        for (Balloon balloon : balloons) {
-            paint.setColor(balloon.color);
-            canvas.drawCircle(balloon.x, balloon.y, balloon.radius, paint);
+        for (GameObject obj : objects) {
+            if (obj instanceof Balloon) {
+                Balloon balloon = (Balloon) obj;
+                paint.setColor(balloon.color);
+                canvas.drawCircle(balloon.x, balloon.y, balloon.radius, paint);
 
-            // Нить шарика
-            paint.setColor(Color.BLACK);
-            paint.setStrokeWidth(2);
-            canvas.drawLine(
-                    balloon.x, balloon.y + balloon.radius,
-                    balloon.x, balloon.y + balloon.radius + 30,
-                    paint
-            );
+                paint.setColor(Color.BLACK);
+                paint.setStrokeWidth(2);
+                canvas.drawLine(
+                        balloon.x, balloon.y + balloon.radius,
+                        balloon.x, balloon.y + balloon.radius + 20,
+                        paint
+                );
+            } else if (obj instanceof Bomb) {
+                Bomb bomb = (Bomb) obj;
+                paint.setColor(Color.BLACK);
+                canvas.drawCircle(bomb.x, bomb.y, bomb.radius, paint);
+
+                paint.setColor(Color.RED);
+                canvas.drawCircle(bomb.x, bomb.y, bomb.radius - 5, paint);
+
+                paint.setColor(Color.WHITE);
+                paint.setTextSize(30);
+                paint.setTextAlign(Paint.Align.CENTER);
+                canvas.drawText("💣", bomb.x, bomb.y + 10, paint);
+
+                paint.setColor(Color.BLACK);
+                paint.setStrokeWidth(3);
+                canvas.drawLine(
+                        bomb.x, bomb.y + bomb.radius,
+                        bomb.x, bomb.y + bomb.radius + 25,
+                        paint
+                );
+            }
         }
 
-        // Если шариков мало, добавляем еще
-        if (balloons.size() < 3) {
+        if (objects.size() < 4) {
             addBalloon();
         }
     }
 
     public void update() {
-        // Обновляем позиции шариков
-        for (int i = balloons.size() - 1; i >= 0; i--) {
-            Balloon balloon = balloons.get(i);
-            balloon.y -= balloon.speed;
+        if (gameOver) return;
 
-            // Если шарик улетел вверх
-            if (balloon.y < -balloon.radius) {
-                balloons.remove(i);
-                addBalloon();
+        for (int i = objects.size() - 1; i >= 0; i--) {
+            GameObject obj = objects.get(i);
+            obj.y -= obj.speed;
+
+            if (obj.y < -obj.radius) {
+                objects.remove(i);
+                if (obj instanceof Balloon) {
+                    addBalloon();
+                } else if (obj instanceof Bomb) {
+                    addBomb();
+                }
             }
         }
 
-        // Добавляем новые шарики иногда
-        if (balloons.size() < 8 && random.nextInt(50) == 0) {
-            addBalloon();
+        if (objects.size() < 8 && random.nextInt(60) == 0) {
+            if (random.nextBoolean()) {
+                addBalloon();
+            } else {
+                addBomb();
+            }
         }
 
-        // Перерисовываем
         invalidate();
     }
 
-    public void handleTouch(float x, float y) {
-        for (int i = balloons.size() - 1; i >= 0; i--) {
-            Balloon balloon = balloons.get(i);
+    public boolean handleTouch(float x, float y) {
+        if (gameOver) return false;
+
+        for (int i = objects.size() - 1; i >= 0; i--) {
+            GameObject obj = objects.get(i);
             float distance = (float) Math.sqrt(
-                    Math.pow(x - balloon.x, 2) + Math.pow(y - balloon.y, 2)
+                    Math.pow(x - obj.x, 2) + Math.pow(y - obj.y, 2)
             );
 
-            if (distance <= balloon.radius) {
-                balloons.remove(i);
-                score += 10;
-                addBalloon();
+            if (distance <= obj.radius) {
+                if (obj instanceof Balloon) {
+                    objects.remove(i);
+                    score += 10;
+                    addBalloon();
+                    if (random.nextInt(5) == 0) {
+                        addBomb();
+                    }
+                } else if (obj instanceof Bomb) {
+                    gameOver = true;
+                    if (gameOverListener != null) {
+                        gameOverListener.onGameOver();
+                    }
+                    return true;
+                }
                 break;
             }
         }
+        return false;
     }
 
     public int getScore() {
         return score;
     }
 
-    // Класс шарика
-    private class Balloon {
+    private abstract class GameObject {
         float x, y;
         int radius;
         int speed;
-        int color;
 
-        Balloon(float x, float y, int radius, int speed, int color) {
+        GameObject(float x, float y, int radius, int speed) {
             this.x = x;
             this.y = y;
             this.radius = radius;
             this.speed = speed;
+        }
+    }
+
+    private class Balloon extends GameObject {
+        int color;
+
+        Balloon(float x, float y, int radius, int speed, int color) {
+            super(x, y, radius, speed);
             this.color = color;
+        }
+    }
+
+    private class Bomb extends GameObject {
+        Bomb(float x, float y, int radius, int speed) {
+            super(x, y, radius, speed);
         }
     }
 }

@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -40,10 +41,11 @@ public class MainActivity extends AppCompatActivity {
         btnRestart = findViewById(R.id.btnRestart);
         btnPause = findViewById(R.id.btnPause);
         btnMenu = findViewById(R.id.btnMenu);
+
+        gameView.setGameOverListener(() -> showGameOverDialog());
     }
 
     private void loadBestScore() {
-        // Загружаем рекорд из SharedPreferences
         bestScore = getSharedPreferences("GamePrefs", MODE_PRIVATE)
                 .getInt("best_score", 0);
         bestScoreText.setText("Рекорд: " + bestScore);
@@ -76,8 +78,11 @@ public class MainActivity extends AppCompatActivity {
 
         gameView.setOnTouchListener((v, event) -> {
             if (isGameRunning && !isPaused && event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
-                gameView.handleTouch(event.getX(), event.getY());
+                boolean isGameOver = gameView.handleTouch(event.getX(), event.getY());
                 updateScore();
+                if (isGameOver) {
+                    showGameOverDialog();
+                }
                 return true;
             }
             return false;
@@ -116,20 +121,36 @@ public class MainActivity extends AppCompatActivity {
         stopGameLoop();
         isGameRunning = false;
 
-        // Сохраняем рекорд
         saveBestScore(gameView.getScore());
 
-        // Показываем меню
         gameView.setVisibility(View.GONE);
         gameHud.setVisibility(View.GONE);
         menuLayout.setVisibility(View.VISIBLE);
 
-        // Показываем кнопку "Заново"
         btnRestart.setVisibility(View.VISIBLE);
         btnStart.setText("Продолжить");
 
-        // Обновляем счет в меню
         bestScoreText.setText("Рекорд: " + bestScore + "\nТекущий: " + gameView.getScore());
+    }
+
+    private void showGameOverDialog() {
+        stopGameLoop();
+        isGameRunning = false;
+
+        saveBestScore(gameView.getScore());
+
+        new AlertDialog.Builder(this)
+                .setTitle("Игра окончена!")
+                .setMessage("Вы лопнули бомбу!\nВаш счет: " + gameView.getScore() + "\nРекорд: " + bestScore)
+                .setPositiveButton("Играть снова", (dialog, which) -> {
+                    restartGame();
+                    menuLayout.setVisibility(View.GONE);
+                    gameView.setVisibility(View.VISIBLE);
+                    gameHud.setVisibility(View.VISIBLE);
+                })
+                .setNegativeButton("В меню", (dialog, which) -> showMenu())
+                .setCancelable(false)
+                .show();
     }
 
     private void startGameLoop() {
@@ -139,9 +160,9 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 if (isGameRunning && !isPaused) {
                     gameView.update();
-                    gameView.invalidate(); // Перерисовка
+                    gameView.invalidate();
                 }
-                gameHandler.postDelayed(this, 16); // ~60 FPS
+                gameHandler.postDelayed(this, 16);
             }
         };
         gameHandler.post(gameRunnable);
@@ -169,7 +190,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // При возобновлении обновляем лучший счет
         loadBestScore();
     }
 
@@ -180,4 +200,3 @@ public class MainActivity extends AppCompatActivity {
         saveBestScore(gameView.getScore());
     }
 }
-//safa
