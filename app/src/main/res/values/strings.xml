@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Лопни шарики</string>
+    <string name="score_text">Очки: %d</string>
+    <string name="best_score">Рекорд: %d</string>
+    <string name="start_game">Начать игру</string>
+    <string name="restart">Заново</string>
+    <string name="continue_game">Продолжить</string>
+    <string name="menu">Меню</string>
+</resources>

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <!-- Игровое поле -->
+    <com.example.simplegame.GameView
+        android:id="@+id/gameView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"/>
+
+    <!-- Меню -->
+    <LinearLayout
+        android:id="@+id/menuLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="#E0F7FA"
+        android:padding="32dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎈 Лопни шарики 🎈"
+            android:textSize="32sp"
+            android:textColor="#00796B"
+            android:textStyle="bold"
+            android:layout_marginBottom="50dp"
+            tools:ignore="HardcodedText"/>
+
+        <Button
+            android:id="@+id/btnStart"
+            android:layout_width="200dp"
+            android:layout_height="60dp"
+            android:text="Начать игру"
+            android:textSize="18sp"
+            android:layout_marginBottom="20dp"
+            android:background="#00796B"
+            android:textColor="#FFFFFF"/>
+
+        <Button
+            android:id="@+id/btnRestart"
+            android:layout_width="200dp"
+            android:layout_height="60dp"
+            android:text="Заново"
+            android:textSize="18sp"
+            android:layout_marginBottom="20dp"
+            android:background="#0097A7"
+            android:textColor="#FFFFFF"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/bestScoreText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Рекорд: 0"
+            android:textSize="20sp"
+            android:textColor="#00796B"
+            android:layout_marginTop="40dp"
+            tools:ignore="HardcodedText"/>
+
+    </LinearLayout>
+
+    <!-- Панель счета во время игры -->
+    <LinearLayout
+        android:id="@+id/gameHud"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#80000000"
+        android:padding="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/scoreText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Очки: 0"
+            android:textSize="20sp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            tools:ignore="HardcodedText"/>
+
+        <Button
+            android:id="@+id/btnPause"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⏸"
+            android:textSize="18sp"/>
+
+        <Button
+            android:id="@+id/btnMenu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Меню"
+            android:textSize="18sp"
+            android:layout_marginLeft="10dp"/>
+
+    </LinearLayout>
+
+</FrameLayout>
